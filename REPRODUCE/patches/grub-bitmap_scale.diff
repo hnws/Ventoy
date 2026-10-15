@@ -1,0 +1,8 @@
+100c100
+<                        "requested to scale to a size w/ a zero dimension");
+---
+>                        "1 requested to scale to a size w/ a zero dimension %d %d", dst_width, dst_height);
+202c202
+<                        "requested to scale to a size w/ a zero dimension");
+---
+>                        "2 requested to scale to a size w/ a zero dimension %d %d", dst_width, dst_height);

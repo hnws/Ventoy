@@ -1,0 +1,48 @@
+# Every download the REPRODUCE scripts use, pinned by SHA-256.
+# Format: <sha256> <path under REPRODUCE/cache> <url> [<fallback url> ...]
+# `run.sh fetch` downloads anything missing or wrong and refuses a hash mismatch.
+# (The EDK2 inputs are pinned separately in EDK2/ci/run-all.sh.)
+
+# ---- libcs and cross toolchains (as in ventoy/Ventoy#3752 and DOC/BuildVentoyFromSource.txt)
+7994ad5a63d00446da2e95da1f3f03355b272f096d7eb9830417ab14393b3ace dietlibc-0.34.tar.xz https://www.fefe.de/dietlibc/dietlibc-0.34.tar.xz https://archive.softwareheritage.org/api/1/content/sha256:7994ad5a63d00446da2e95da1f3f03355b272f096d7eb9830417ab14393b3ace/raw/ https://web.archive.org/web/20160314123456id_/https://www.fefe.de/dietlibc/dietlibc-0.34.tar.xz
+68af6e18539f646f9c41a3a2bb25be4a5cfa5a8f65f0bb647fd2bbfdf877e84b musl-1.2.1.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz
+04176f56ac977215c5257c307cece2d32e03770b96380e09c50379d4d84a5b39 aarch64--uclibc--stable-2020.08-1.tar.bz2 https://toolchains.bootlin.com/downloads/releases/toolchains/aarch64/tarballs/aarch64--uclibc--stable-2020.08-1.tar.bz2
+fd61033717c2ecd11a07bd7942ec2feb7feac192b65c9c464d9614419c68aad1 mips64el-linux-musl-gcc730.tar.bz2 https://github.com/ventoy/musl-cross-make/releases/download/latest/output.tar.bz2
+27f1dc2c491ed61ae8f0d4b0c11de59cd2f7dd9c94761ee7153006fcac1bf9ab gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.xz https://github.com/ventoy/vtoytoolchain/releases/download/1.0/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu.tar.xz
+e92802811409b86f5a52f589b85038681bb1ac7463284b7b419d502153eca849 mips-loongson-gcc7.3-2019.06-29-linux-gnu.tar.gz https://github.com/ventoy/vtoytoolchain/releases/download/1.0/mips-loongson-gcc7.3-2019.06-29-linux-gnu.tar.gz
+
+# ---- sources
+636cdf34bb5675ec67ea6a73cee826b913b235c4f11f17c3b3797a98721549e8 libfuse-fuse-2.9.9.zip https://codeload.github.com/libfuse/libfuse/zip/fuse-2.9.9
+4bc439d994c281ed4230c6d7fcaafa3e3f84c5c0f17d9d0c2d9647553155baba exfat-1.3.0.zip https://codeload.github.com/relan/exfat/zip/v1.3.0
+e5292496995ad42dabe843a0192cf2a2c502e7ffcc7479398232b10a472df77d grub-2.04.tar.xz https://ftp.gnu.org/gnu/grub/grub-2.04.tar.xz
+c339e3871d6595620760725da61de02cf1c293af8a05b14592d6587ac39ce546 automake-1.11.2.tar.gz https://ftp.gnu.org/gnu/automake/automake-1.11.2.tar.gz
+8fe9294755bf853e7f879bfb4b12a4c39512c20ea8801227ef043117c3ee09a3 zstd-1.0.0.zip https://codeload.github.com/facebook/zstd/zip/v1.0.0
+599a630fdf020282e27c66aa2b4f3d624d731bd150749a8d7b74f544be03b2bb device-mapper-1.02.28-2.el5.src.rpm https://vault.centos.org/5.3/os/SRPMS/device-mapper-1.02.28-2.el5.src.rpm
+c35d87f1d04b2b153d33c275c2632e40d388a88f19a9e71727e0bbbff51fe689 busybox-1.32.0.tar.bz2 https://busybox.net/downloads/busybox-1.32.0.tar.bz2
+f6f4910fd033078738bd82bfba4f49219d03b17eb0794eb91efbae419f4aba10 xz-5.2.5.tar.gz https://tukaani.org/xz/xz-5.2.5.tar.gz
+# wimboot v2.7.3 (fc3ee1e): the three .S files missing from Ventoy's wimboot/wimboot-2.7.3/src
+55f94de0320cfdb4af5f16a0f4684116e7b9d040d108ec70bd4d30d04f194a32 wimboot-S/prefix.S https://raw.githubusercontent.com/ipxe/wimboot/fc3ee1ef9b6c809a976d90df00a292db1d533ce9/src/prefix.S
+644d72ab1a92dddd6f344cbb98ede95bdeb8cd4045ca013ed0f561aeed15f563 wimboot-S/startup.S https://raw.githubusercontent.com/ipxe/wimboot/fc3ee1ef9b6c809a976d90df00a292db1d533ce9/src/startup.S
+c7b3253034a66787a344c488d5cb192887b04c98b74fc9b3f1b089eea926c48d wimboot-S/callback.S https://raw.githubusercontent.com/ipxe/wimboot/fc3ee1ef9b6c809a976d90df00a292db1d533ce9/src/callback.S
+
+# ---- CentOS 5.11 gcc 4.1.2 (vtoytool 01/02 experiment). CentOS 5's yum can't do TLS to the vault any more.
+b078853e154130bf0e17678145aab93468c5ceaf030a39b5e91780408329ef18 c5rpm/cpp-4.1.2-55.el5.x86_64.rpm https://vault.centos.org/5.11/os/x86_64/CentOS/cpp-4.1.2-55.el5.x86_64.rpm
+fcf8b8f11082e4edbb7294f9ba6de671c9953dae6de8a7d7a5a786b8e5d47bb2 c5rpm/gcc-4.1.2-55.el5.x86_64.rpm https://vault.centos.org/5.11/os/x86_64/CentOS/gcc-4.1.2-55.el5.x86_64.rpm
+dcd707f4179df6be8733cd490f2a580ee0707a657471731a659ee122afb22be7 c5rpm/libgomp-4.4.7-1.el5.x86_64.rpm https://vault.centos.org/5.11/os/x86_64/CentOS/libgomp-4.4.7-1.el5.x86_64.rpm
+56525647fe0ce0516caa1b3d649b835f3194523008805aa65ba27cb6244ddef5 c5rpm/make-3.81-3.el5.x86_64.rpm https://vault.centos.org/5.11/os/x86_64/CentOS/make-3.81-3.el5.x86_64.rpm
+abf09d7f3e2ba4d214bd60f95afac1d9c49fbd964ee2b49d0531e3169358880f c5rpm/kernel-headers-2.6.18-398.el5.x86_64.rpm https://vault.centos.org/5.11/os/x86_64/CentOS/kernel-headers-2.6.18-398.el5.x86_64.rpm
+b650ce43cfdd851a8a8570a38522363c67c87ec68dd1e3a9f93a0d732f6d8746 c5rpm/glibc-devel-2.5-123.el5_11.3.x86_64.rpm https://vault.centos.org/5.11/updates/x86_64/RPMS/glibc-devel-2.5-123.el5_11.3.x86_64.rpm
+72db66b5d6f76e217e11d59844917bc058739818106d3f54c0349f545a3d003b c5rpm/glibc-headers-2.5-123.el5_11.3.x86_64.rpm https://vault.centos.org/5.11/updates/x86_64/RPMS/glibc-headers-2.5-123.el5_11.3.x86_64.rpm
+
+# ---- upstream binaries that Ventoy ships unmodified (compared, not rebuilt)
+26d3986d2bea109d5dc0e4f8c4822a459276cf021125e8c9f23c3cca5d8c850e syslinux-6.03.tar.xz https://cdn.kernel.org/pub/linux/utils/boot/syslinux/syslinux-6.03.tar.xz
+641077fc1f9914af244c248453005f56536ba9e7f54ba3e52402f26709ddb8a5 upstream/vmlinuz64 http://www.tinycorelinux.net/11.x/x86_64/release/distribution_files/vmlinuz64 http://www.tinycorelinux.net/11.x/x86_64/archive/11.0/distribution_files/vmlinuz64
+51fcb60efbdf3e579550e9ab893730df56b33d0cc928a2a6467bd846cdfef7d8 upstream/busybox-x86_64 https://busybox.net/downloads/binaries/1.31.0-defconfig-multiarch-musl/busybox-x86_64
+eb9d71657623a0c8c23f7b0d64abfcdefcb45f3ffcd1183a9dc696fb1b6092bd upstream/busybox-i686 https://busybox.net/downloads/binaries/1.28.1-defconfig-multiarch/busybox-i686
+f29b7d81a983c0c85d22496f4a833c18f2528a1b666eb7d47c93084c1ed66ae0 upstream/busybox_AR-1.30.0-i686 https://busybox.net/downloads/binaries/1.30.0-i686/busybox_AR
+3532162a8695e91a1ed9ddea28b2cb22259a90e93d5d9c4a517b6c36842c686f upstream/busybox_INOTIFYD-1.30.0-i686 https://busybox.net/downloads/binaries/1.30.0-i686/busybox_INOTIFYD
+7399db642c2beaf52a16ab5264ffc55cfd1ff5699a524f63e5d48edf84e20f44 upstream/busybox_XZCAT-1.30.0-i686 https://busybox.net/downloads/binaries/1.30.0-i686/busybox_XZCAT
+cde08b6a2cf5ad914f05203e18e3f7c2ed6060a63604e3d75536f19b55e8e0af upstream/busybox_HEXDUMP-1.30.0-i686 https://busybox.net/downloads/binaries/1.30.0-i686/busybox_HEXDUMP
+44a6274bca580c2758ffc173fc76d18bb855b1fe8dcf70efd9ee75cbd57dee97 upstream/busybox_ASH-1.27.1-i686 https://busybox.net/downloads/binaries/1.27.1-i686/busybox_ASH
+2943f02f85fee0c9551aec47110a558a73f919c032b3c51e56d6f197b5ec4d7b upstream/busybox_ASH-1.31.0-i686-uclibc https://busybox.net/downloads/binaries/1.31.0-i686-uclibc/busybox_ASH
+13d293ddeedb469f51da41167f79b2cbdb904e681716f6e6191b233dbb162438 upstream/smallz4cat-x32-v1.4 https://create.stephan-brumme.com/smallz4/smallz4cat-x32-v1.4
