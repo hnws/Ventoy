@@ -19,7 +19,7 @@ Measured against the 179-entry blob list in the opening post of ventoy/Ventoy#32
 | Reproduced byte for byte (PE images apart from Ventoy's signature) | **104** | §5.1, §7–§12 |
 | … of which identical to an upstream prebuilt download rather than rebuilt | 12 | §9, §11, §12 |
 | Code and data identical, only the GNU build ID differs | 2 | §9 (`xzminidec32`/`64`) |
-| Cannot be checked: built from source that was never published | 2 | §9 (`vtoytool` 01/02) |
+| Cannot be checked: built from source that was never published | 2 | §9 (`vtoytool` 01/02); §13: analysed with REA, reachable code matches published logic, unpublished parts are dead debug code |
 | Covered by open PR ventoy/Ventoy#3752 (not re-checked here) | 10 | §6 |
 | Unresolved | 61 | `unresolved_blobs.md` |
 
@@ -57,6 +57,12 @@ scope and are described only at a high level (§3).
 `drafts/issue-3224-comment.md`). Before posting, every claim was re-checked by `verify/verify_all.py`
 (116 checks, all pass; output in `verify/verify_all.txt`). The re-check corrected two statements: the iPXE size
 difference (§8) and the vtoytool 01/02 function list (§9).
+
+**Scripts published:** branch [`reproducible-builds`](https://github.com/hnws/Ventoy/tree/reproducible-builds)
+on the hnws/Ventoy fork (commit b5eb57c, on top of the EDK2 CI commit b96925e). It adds `REPRODUCE/` with `run.sh`, pinned inputs,
+build images, build scripts, tools, patches, `verify.py` and this write-up. A from-scratch
+`sh REPRODUCE/run.sh all` passes all 155 checks, including release copies for every architecture. The #3224 comment was edited (18:23 UTC) to
+append a link to this branch, rather than posting a new comment.
 
 ## 1. Binaries committed in the Ventoy source repo
 
@@ -692,3 +698,68 @@ Scripts: `batch5/build_bb.sh` (`CFG`, `NAME`, `MAKEARGS`, `MUSL=1`, `TS`, `CFG=d
 `batch5/xz_variants.sh`, `batch5/xz_cflags.sh`. The uClibc mini-native rootfs images
 (`uclibc-mini-native-{x86_64,i686}:0.9.30.1`) were imported from uclibc.org tarballs
 (`38203f01…`, `37172fec…`). They were used only for the negative results above.
+
+## 13. What `vtoytool/01` and `/02` actually contain (REA + Ghidra, 2026-10-15)
+
+`VtoyTool/vtoytool/01/vtoytool_64` (= `02/`, SHA-256 `fc0eac0e…`) can't be rebuilt from published
+source (§9), so it was analysed directly. Inputs: REA `open_binary` with the Ghidra provider (12.1.2). The binary is not stripped, so
+function names are real. Evidence bundle: `decomp/vtoytool01_evidence.json`.
+
+**Inventory.** 262 procedures, 134 of them Ventoy/BabyISO (the rest is dietlibc). Against the initial-commit
+source (05a1b86), parsing every `.c` file:
+- 100 are defined in published source.
+- 2 are only declared in `biso.h` (`BISO_DumpVD`, `BISO_DumpPathTable`).
+- 1 is referenced only in commented-out calls (`BISO_DUMP_ShowSUSPEntry`).
+- 31 exist in no published revision: 30 `BISO_DUMP_Show*` functions plus `vtoy_simple_check_blkdev`.
+
+**The unpublished code is dead code, apart from one helper.**
+- The 30 `BISO_DUMP_Show*` functions are an ISO 9660/Rock Ridge/El Torito pretty-printer. For example, `BISO_DUMP_ShowPVD` only `printf`s
+  the Primary Volume Descriptor's fields. They are reachable only from `BISO_DumpVD`, `BISO_DumpPathTable` and
+  `BISO_DUMP_ShowSUSPEntry`, and none of those has a caller. The only reference to the
+  `g_astBISO_DUMP_ShowEntryFunc` pointer table is inside `BISO_DUMP_ShowSUSPEntry`; the only "reference" to that
+  function is in `.eh_frame`. A union of the forward call graphs from `entry`, `main` and the four command handlers
+  reaches none of the 31. The published `biso_dump.c` is an 87-line stub of the same module: Ventoy trimmed the
+  library before publishing it, but this 2020 binary still carries the full version.
+- `vtoy_simple_check_blkdev` is live. It's the older form of the published `vtoy_is_possible_blkdev`, and skips only
+  `ram*` and `loop*` block devices, where the published code also skips `dm-*` and `sr*`.
+
+**What the reachable code does.** It's an earlier version of the published VtoyTool, with four commands dispatched
+by `strstr` on `argv` through `g_cmd_list` (`vtoydump`, `vtoydm`, `loader`, `--install`):
+- `--install` (what `vtoytool_install.sh` runs, as root, in the initramfs): for each non-`-` command, `link("/ventoy/tool/<argv0 name>", "/ventoy/tool/<cmd>")`.
+  Nothing else. It's identical in logic to the published `vtoytool_install`.
+- `vtoydump` (`c:f:v::`) finds the Ventoy OS-parameter block: with `-f FILE` from a file, as in the published code.
+  **Without `-f` it has two fallbacks that the published source documents in a comment but no longer contains:**
+  - BIOS: read-only `mmap(/dev/mem, 0x80000, 0x1c000)`, scanned in 16-byte steps for the Ventoy GUID with a zero checksum over 0x400 bytes.
+  - UEFI: read `/sys/firmware/efi/vars/VentoyOsParam-fd955401-89da-43c7-a39e-c7e531e58446/data`. **This path is broken:**
+    after `read(fd, buf, 0x400)` it rejects anything but an 8-byte read (`CMP R12D, 0x8` at `0x400f25`), which looks like
+    a `sizeof(pointer)` mistake, so it never succeeds.
+
+  It then finds the Ventoy disk among `/sys/block/*` by size (sysfs or the `BLKGETSIZE64` ioctl) and, if ambiguous, by the GUID at offset 0x180, and prints `/dev/<disk>#<image path>`. `-c DEV` checks a given disk.
+- `vtoydm` (`s:l:o:d:f:v::i::p::c::h::e::`):
+  - `-p` prints a device-mapper linear table from the image map.
+  - `-i` dumps the ISO tree (via the *published* `BISO_DumpFileTree`).
+  - `-e` extracts sectors to a file with `fopen(..., "wb")`.
+- `loader`:
+  1. reads `/ventoy/loader_exec_file`
+  2. runs `system()` on `/ventoy/loader_hook_cmd` if present
+  3. `execv`s the target with arguments from `/ventoy/loader_exec_cmdline`
+
+  Same logic as the published `vtoyloader.c`.
+
+**Nothing else.** The linked libc functions include no sockets, no `setuid`/`setgid`, no `mount`, `unlink`,
+`chmod` or module loading. The only file writes are `link()` (`--install`) and `vtoydm -e`'s output file. `fork`/`execve` come only
+via `system()` and `execv()` in `loader`. Strings contain no URLs or IP addresses; the only paths are Ventoy's
+`/ventoy/...`, `/sys/block`, `/sys/firmware/efi...`, `/dev/...`, plus dietlibc's `/bin/sh`, `/dev/urandom` and `/etc/localtime`.
+
+**When it runs, and a compatibility caveat.** `vtoytool_install.sh` tries `vtoytool/00`, then `01`, then `02`
+(`ls` order), trying `vtoytool_64` then `vtoytool_32` in each and stopping at the first `--install` that succeeds.
+So on x86, `01` only runs when neither `00/vtoytool_64` nor `00/vtoytool_32` can execute on the booting kernel. On
+arm64 and mips64 the loop looks for `vtoytool_aa64`/`vtoytool_m64e`, which `01/` and `02/` don't contain, so their copies in
+those cpios are never used. In that case the hooks still call `vtoydump -s`/`-t` and `vtoydm -r`/`-w`, which this 2020 binary
+doesn't support (it prints usage and exits 1). On such a system, those hook features fail. `02` is byte-identical to
+`01`, so it adds nothing as a further fallback.
+
+**Verdict.** The code that can actually run in `01/02` matches published logic, apart from the `vtoydump`
+memory/EFI-variable fallbacks, which the hooks never use since they always pass `-f`. Its unpublished
+content is a debug pretty-printer that is unreachable. No hidden or harmful behaviour was found. This is a static analysis only;
+nothing was executed.
